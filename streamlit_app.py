@@ -9,7 +9,7 @@ def main():
     
     try:
         # Load the Excel file from the 'peaks' directory
-        data_path = "peaks/peaks.xlsx"
+        data_path = "peaks.xlsx"
         df = pd.read_excel(data_path)
         
         st.write("### Data Overview")
