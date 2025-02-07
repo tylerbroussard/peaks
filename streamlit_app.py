@@ -59,7 +59,7 @@ def main():
             # Create the points
             points = line.mark_point(size=100).encode(
                 opacity=alt.value(0)  # make the points transparent
-            ).add_selection(
+            ).add_params(
                 nearest
             )
 
@@ -135,7 +135,7 @@ def main():
             # Points for calls
             calls_points = calls_lines.mark_point(size=100).encode(
                 opacity=alt.value(0)
-            ).add_selection(
+            ).add_params(
                 nearest_calls
             )
 
