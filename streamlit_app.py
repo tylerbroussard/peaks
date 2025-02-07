@@ -20,8 +20,15 @@ def main():
         # Load the Excel file
         data_path = "peaks.xlsx"
         df = pd.read_excel(data_path)
-        df['Date'] = pd.to_datetime(df['Date'])
         
+        # Convert date column with specific format
+        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
+        
+        # Ensure we have valid data
+        if df.empty:
+            st.error("No data found in the Excel file.")
+            return
+            
         # Data Overview
         st.write("### Data Overview")
         st.dataframe(df)
@@ -103,6 +110,9 @@ def main():
 
     except Exception as e:
         st.error(f"An error occurred while loading data: {e}")
+        st.write("Please check that:")
+        st.write("1. The 'Date' column contains dates in MM/DD/YYYY format")
+        st.write("2. There are no missing or invalid values")
 
 
 if __name__ == "__main__":
