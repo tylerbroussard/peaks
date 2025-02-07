@@ -2,12 +2,18 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import importlib.util
+import re
 
 
 def check_openpyxl():
     if importlib.util.find_spec("openpyxl") is None:
         st.error("Missing optional dependency 'openpyxl'. Please install it via pip: pip install openpyxl")
         st.stop()
+
+
+def is_date_format(x):
+    # Check if string matches MM/DD/YYYY format
+    return bool(re.match(r'\d{2}/\d{2}/\d{4}$', str(x)))
 
 
 def main():
@@ -21,12 +27,13 @@ def main():
         data_path = "peaks.xlsx"
         df = pd.read_excel(data_path)
         
-        # Convert date column with specific format
+        # Filter out non-date rows and convert to datetime
+        df = df[df['Date'].apply(is_date_format)].copy()
         df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
         
         # Ensure we have valid data
         if df.empty:
-            st.error("No data found in the Excel file.")
+            st.error("No valid data found in the Excel file.")
             return
             
         # Data Overview
@@ -110,9 +117,9 @@ def main():
 
     except Exception as e:
         st.error(f"An error occurred while loading data: {e}")
-        st.write("Please check that:")
-        st.write("1. The 'Date' column contains dates in MM/DD/YYYY format")
-        st.write("2. There are no missing or invalid values")
+        st.write("Please check that the data is in the correct format:")
+        st.write("1. Dates should be in MM/DD/YYYY format")
+        st.write("2. Only numeric values for peak counts")
 
 
 if __name__ == "__main__":
