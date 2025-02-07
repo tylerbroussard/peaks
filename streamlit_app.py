@@ -11,8 +11,8 @@ def check_openpyxl():
 
 
 def main():
-    st.title("Agent Peak Analysis Dashboard")
-    st.subheader("Daily Peak Values")
+    st.title("Agent and Call Peak Analysis")
+    st.subheader("Daily Peak Analysis")
 
     check_openpyxl()
     
@@ -20,48 +20,86 @@ def main():
         # Load the Excel file
         data_path = "peaks.xlsx"
         df = pd.read_excel(data_path)
-        
-        # Ensure date column is in datetime format
-        date_col = df.select_dtypes(include=['datetime64']).columns[0]
+        df['Date'] = pd.to_datetime(df['Date'])
         
         # Data Overview
         st.write("### Data Overview")
         st.dataframe(df)
         
-        # Time series visualization
-        st.write("### Peak Values Over Time")
+        # Create tabs for different visualizations
+        tab1, tab2 = st.tabs(["Agents Peak", "Calls Peak Analysis"])
         
-        # Get numeric columns (excluding date)
-        numeric_cols = df.select_dtypes(include=['number']).columns
+        with tab1:
+            st.write("### Agent Peak Values Over Time")
+            
+            # Create the agents peak chart
+            agents_chart = alt.Chart(df).mark_line(
+                point=True,
+                color='#1f77b4'
+            ).encode(
+                x=alt.X('Date:T', title='Date'),
+                y=alt.Y('Agents Peak:Q', title='Number of Agents'),
+                tooltip=['Date:T', 'Agents Peak:Q']
+            ).properties(
+                width=800,
+                height=400,
+                title="Daily Agent Peak Values"
+            ).interactive()
+            
+            st.altair_chart(agents_chart, use_container_width=True)
+            
+            # Show agent peak statistics
+            st.write("### Agent Peak Statistics")
+            agent_stats = df['Agents Peak'].describe()
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Average Agents", f"{agent_stats['mean']:.0f}")
+            with col2:
+                st.metric("Maximum Agents", f"{agent_stats['max']:.0f}")
+            with col3:
+                st.metric("Minimum Agents", f"{agent_stats['min']:.0f}")
+            with col4:
+                st.metric("Standard Deviation", f"{agent_stats['std']:.1f}")
         
-        # Create a selector for which peak value to display
-        selected_peak = st.selectbox("Select Peak Value to Display:", numeric_cols)
-        
-        # Create the time series chart
-        chart = alt.Chart(df).mark_line(point=True).encode(
-            x=alt.X(date_col, title='Date'),
-            y=alt.Y(selected_peak, title='Peak Value'),
-            tooltip=[date_col, selected_peak]
-        ).properties(
-            width=800,
-            height=400,
-            title=f"Daily {selected_peak} Peak Values"
-        ).interactive()
-        
-        st.altair_chart(chart, use_container_width=True)
-        
-        # Show summary statistics
-        st.write("### Summary Statistics")
-        stats = df[selected_peak].describe()
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Average Peak", f"{stats['mean']:.2f}")
-        with col2:
-            st.metric("Maximum Peak", f"{stats['max']:.2f}")
-        with col3:
-            st.metric("Minimum Peak", f"{stats['min']:.2f}")
-        with col4:
-            st.metric("Standard Deviation", f"{stats['std']:.2f}")
+        with tab2:
+            st.write("### Call Peak Analysis")
+            
+            # Create a combined chart for all call types
+            call_data = pd.melt(
+                df,
+                id_vars=['Date'],
+                value_vars=['Calls Peak', 'Calls Peak (Inbound)', 'Calls Peak (Outbound)'],
+                var_name='Call Type',
+                value_name='Peak Value'
+            )
+            
+            calls_chart = alt.Chart(call_data).mark_line(point=True).encode(
+                x=alt.X('Date:T', title='Date'),
+                y=alt.Y('Peak Value:Q', title='Number of Calls'),
+                color=alt.Color('Call Type:N', title='Type'),
+                tooltip=['Date:T', 'Call Type:N', 'Peak Value:Q']
+            ).properties(
+                width=800,
+                height=400,
+                title="Daily Call Peak Values by Type"
+            ).interactive()
+            
+            st.altair_chart(calls_chart, use_container_width=True)
+            
+            # Show call peak statistics
+            st.write("### Call Peak Statistics")
+            
+            col1, col2, col3 = st.columns(3)
+            metrics = ['Calls Peak', 'Calls Peak (Inbound)', 'Calls Peak (Outbound)']
+            cols = [col1, col2, col3]
+            
+            for col, metric in zip(cols, metrics):
+                with col:
+                    st.write(f"**{metric}**")
+                    stats = df[metric].describe()
+                    st.write(f"Average: {stats['mean']:.0f}")
+                    st.write(f"Maximum: {stats['max']:.0f}")
+                    st.write(f"Minimum: {stats['min']:.0f}")
 
     except Exception as e:
         st.error(f"An error occurred while loading data: {e}")
