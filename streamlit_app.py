@@ -46,14 +46,48 @@ def main():
         with tab1:
             st.write("### Agent Peak Values Over Time")
             
-            # Create the agents peak chart
-            agents_chart = alt.Chart(df).mark_line(
-                point=True,
-                color='#1f77b4'
-            ).encode(
+            # Create a selection that chooses the nearest point & selects based on x-position
+            nearest = alt.selection_point(nearest=True, on='mouseover',
+                                        fields=['Date'], empty=False)
+
+            # Create the base line
+            line = alt.Chart(df).mark_line(color='#1f77b4').encode(
                 x=alt.X('Date:T', title='Date'),
-                y=alt.Y('Agents Peak:Q', title='Number of Agents'),
-                tooltip=['Date:T', 'Agents Peak:Q']
+                y=alt.Y('Agents Peak:Q', title='Number of Agents')
+            )
+
+            # Create the points
+            points = line.mark_point(size=100).encode(
+                opacity=alt.value(0)  # make the points transparent
+            ).add_selection(
+                nearest
+            )
+
+            # Create a rule that highlights the date at the x-position of the cursor
+            rules = alt.Chart(df).mark_rule(color='gray').encode(
+                x='Date:T'
+            ).transform_filter(
+                nearest
+            )
+
+            # Create text labels that appear on hover
+            text = line.mark_text(
+                align='left',
+                dx=5,
+                dy=-5,
+                fontSize=12
+            ).encode(
+                text=alt.condition(nearest, 'Agents Peak:Q', alt.value(' '), format='.0f')
+            ).transform_filter(
+                nearest
+            )
+
+            # Combine all the layers
+            agents_chart = alt.layer(
+                line,
+                points,
+                rules,
+                text
             ).properties(
                 width=800,
                 height=400,
@@ -78,7 +112,7 @@ def main():
         with tab2:
             st.write("### Call Peak Analysis")
             
-            # Create a combined chart for all call types
+            # Create a combined chart for all call types with improved interaction
             call_data = pd.melt(
                 df,
                 id_vars=['Date'],
@@ -87,11 +121,49 @@ def main():
                 value_name='Peak Value'
             )
             
-            calls_chart = alt.Chart(call_data).mark_line(point=True).encode(
+            # Create selection for calls chart
+            nearest_calls = alt.selection_point(nearest=True, on='mouseover',
+                                              fields=['Date'], empty=False)
+
+            # Base lines for calls
+            calls_lines = alt.Chart(call_data).mark_line().encode(
                 x=alt.X('Date:T', title='Date'),
                 y=alt.Y('Peak Value:Q', title='Number of Calls'),
-                color=alt.Color('Call Type:N', title='Type'),
-                tooltip=['Date:T', 'Call Type:N', 'Peak Value:Q']
+                color=alt.Color('Call Type:N', title='Type')
+            )
+
+            # Points for calls
+            calls_points = calls_lines.mark_point(size=100).encode(
+                opacity=alt.value(0)
+            ).add_selection(
+                nearest_calls
+            )
+
+            # Rules for calls
+            calls_rules = alt.Chart(call_data).mark_rule(color='gray').encode(
+                x='Date:T'
+            ).transform_filter(
+                nearest_calls
+            )
+
+            # Text for calls
+            calls_text = calls_lines.mark_text(
+                align='left',
+                dx=5,
+                dy=-5,
+                fontSize=12
+            ).encode(
+                text=alt.condition(nearest_calls, 'Peak Value:Q', alt.value(' '), format='.0f')
+            ).transform_filter(
+                nearest_calls
+            )
+
+            # Combine all layers for calls chart
+            calls_chart = alt.layer(
+                calls_lines,
+                calls_points,
+                calls_rules,
+                calls_text
             ).properties(
                 width=800,
                 height=400,
