@@ -18,7 +18,6 @@ def is_date_format(x):
 
 def main():
     st.title("Agent and Call Peaks")
-    st.subheader("Daily Peak Analysis")
 
     check_openpyxl()
     
