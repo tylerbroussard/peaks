@@ -17,7 +17,7 @@ def is_date_format(x):
 
 
 def main():
-    st.title("Agent and Call Peak Analysis")
+    st.title("Agent and Call Peaks")
     st.subheader("Daily Peak Analysis")
 
     check_openpyxl()
@@ -37,14 +37,14 @@ def main():
             return
             
         # Data Overview
-        st.write("### Data Overview")
+        st.write("### Data")
         st.dataframe(df)
         
         # Create tabs for different visualizations
-        tab1, tab2 = st.tabs(["Agents Peak", "Calls Peak Analysis"])
+        tab1, tab2 = st.tabs(["Agent Peaks", "Call Peaks"])
         
         with tab1:
-            st.write("### Agent Peak Values Over Time")
+            st.write("### Agent Peaks")
             
             # Create a selection that chooses the nearest point & selects based on x-position
             nearest = alt.selection_point(nearest=True, on='mouseover',
