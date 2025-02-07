@@ -12,7 +12,7 @@ def check_openpyxl():
 
 def main():
     st.title("Agent Peak Analysis Dashboard")
-    st.subheader("Analysis of Peak Data")
+    st.subheader("Daily Peak Values")
 
     check_openpyxl()
     
@@ -21,63 +21,47 @@ def main():
         data_path = "peaks.xlsx"
         df = pd.read_excel(data_path)
         
-        # Data Overview Section
+        # Ensure date column is in datetime format
+        date_col = df.select_dtypes(include=['datetime64']).columns[0]
+        
+        # Data Overview
         st.write("### Data Overview")
         st.dataframe(df)
-
-        # Add filters
-        st.write("### Filters")
-        cols = df.columns.tolist()
-        selected_cols = st.multiselect("Select columns to analyze:", cols, default=cols[:2])
-
-        if selected_cols:
-            filtered_df = df[selected_cols]
-            
-            # Create visualizations
-            st.write("### Peak Analysis")
-            
-            # Bar chart for comparing values
-            if len(selected_cols) >= 1:
-                for col in selected_cols:
-                    if pd.api.types.is_numeric_dtype(df[col]):
-                        st.write(f"#### Analysis of {col}")
-                        chart = alt.Chart(df).mark_bar().encode(
-                            x=alt.X(col, bin=True),
-                            y='count()',
-                            tooltip=[col, 'count()']
-                        ).properties(
-                            width=600,
-                            height=400,
-                            title=f"Distribution of {col}"
-                        )
-                        st.altair_chart(chart, use_container_width=True)
-
-                        # Show basic statistics
-                        st.write("Basic Statistics:")
-                        stats = df[col].describe()
-                        st.write(f"Mean: {stats['mean']:.2f}")
-                        st.write(f"Median: {stats['50%']:.2f}")
-                        st.write(f"Max: {stats['max']:.2f}")
-                        st.write(f"Min: {stats['min']:.2f}")
-
-            # Correlation heatmap for multiple numeric columns
-            numeric_cols = df[selected_cols].select_dtypes(include=['number']).columns
-            if len(numeric_cols) >= 2:
-                st.write("#### Correlation Analysis")
-                corr_df = df[numeric_cols].corr().reset_index()
-                corr_df = corr_df.melt('index', var_name='variable', value_name='correlation')
-                
-                heatmap = alt.Chart(corr_df).mark_rect().encode(
-                    x='index:O',
-                    y='variable:O',
-                    color='correlation:Q',
-                    tooltip=['index', 'variable', 'correlation']
-                ).properties(
-                    width=400,
-                    height=300,
-                    title="Correlation Heatmap"
-                )
-                st.altair_chart(heatmap, use_container_width=True)
+        
+        # Time series visualization
+        st.write("### Peak Values Over Time")
+        
+        # Get numeric columns (excluding date)
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        
+        # Create a selector for which peak value to display
+        selected_peak = st.selectbox("Select Peak Value to Display:", numeric_cols)
+        
+        # Create the time series chart
+        chart = alt.Chart(df).mark_line(point=True).encode(
+            x=alt.X(date_col, title='Date'),
+            y=alt.Y(selected_peak, title='Peak Value'),
+            tooltip=[date_col, selected_peak]
+        ).properties(
+            width=800,
+            height=400,
+            title=f"Daily {selected_peak} Peak Values"
+        ).interactive()
+        
+        st.altair_chart(chart, use_container_width=True)
+        
+        # Show summary statistics
+        st.write("### Summary Statistics")
+        stats = df[selected_peak].describe()
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Average Peak", f"{stats['mean']:.2f}")
+        with col2:
+            st.metric("Maximum Peak", f"{stats['max']:.2f}")
+        with col3:
+            st.metric("Minimum Peak", f"{stats['min']:.2f}")
+        with col4:
+            st.metric("Standard Deviation", f"{stats['std']:.2f}")
 
     except Exception as e:
         st.error(f"An error occurred while loading data: {e}")
