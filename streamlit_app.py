@@ -30,6 +30,11 @@ def main():
         df = df[df['Date'].apply(is_date_format)].copy()
         df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
         
+        # Calculate and display date range
+        min_date = df['Date'].min().strftime('%m/%d/%Y')
+        max_date = df['Date'].max().strftime('%m/%d/%Y')
+        st.write(f'**Data Date Range:** {min_date} to {max_date}')
+        
         # Ensure we have valid data
         if df.empty:
             st.error("No valid data found in the Excel file.")
