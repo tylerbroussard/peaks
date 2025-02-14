@@ -225,18 +225,63 @@ def main():
             # Show call peak statistics
             st.write("### Call Peak Statistics")
             
-            col1, col2, col3 = st.columns(3)
-            metrics = ['Calls Peak', 'Calls Peak (Inbound)', 'Calls Peak (Outbound)']
-            cols = [col1, col2, col3]
+            # Calculate statistics for each call type
+            call_types = {
+                'Total Calls': 'Calls Peak',
+                'Inbound Calls': 'Calls Peak (Inbound)',
+                'Outbound Calls': 'Calls Peak (Outbound)'
+            }
             
-            for col, metric in zip(cols, metrics):
-                with col:
-                    st.write(f"**{metric}**")
-                    stats = df[metric].describe()
-                    st.write(f"Average: {stats['mean']:.0f}")
-                    st.write(f"Maximum: {stats['max']:.0f}")
-                    st.write(f"Minimum: {stats['min']:.0f}")
-
+            for call_type_display, call_type_col in call_types.items():
+                stats = df[call_type_col].describe()
+                mean_calls = stats['mean']
+                std_dev = stats['std']
+                median_calls = stats['50%']
+                
+                # Calculate typical range
+                lower_range = mean_calls - std_dev
+                upper_range = mean_calls + std_dev
+                
+                # Calculate days outside range
+                days_outside = len(df[(df[call_type_col] < lower_range) | (df[call_type_col] > upper_range)])
+                
+                st.markdown(f"""
+                    <div style='background-color: #f0f2f6; padding: 15px; border-radius: 10px; margin-bottom: 15px;'>
+                        <h4 style='color: #1f77b4; margin-top: 0;'>{call_type_display} Peak Patterns</h4>
+                        <div style='display: flex; justify-content: space-between;'>
+                            <div style='flex: 1;'>
+                                <p style='font-size: 16px; margin: 5px 0;'>
+                                • Median Peak: <strong>{median_calls:.0f}</strong> calls<br>
+                                • Average Peak: <strong>{mean_calls:.0f}</strong> calls<br>
+                                • Range: <strong>{stats['min']:.0f}</strong> to <strong>{stats['max']:.0f}</strong> calls
+                                </p>
+                            </div>
+                            <div style='flex: 1;'>
+                                <p style='font-size: 16px; margin: 5px 0;'>
+                                • Typical Range: <strong>{lower_range:.0f}</strong> to <strong>{upper_range:.0f}</strong> calls<br>
+                                • Standard Deviation: ±<strong>{std_dev:.1f}</strong> calls<br>
+                                • <strong>{days_outside}</strong> out of <strong>{len(df)}</strong> days outside typical range
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Calculate and display the ratio of inbound/outbound if this is the total calls section
+                if call_type_col == 'Calls Peak':
+                    inbound_ratio = (df['Calls Peak (Inbound)'] / df['Calls Peak']).mean() * 100
+                    outbound_ratio = (df['Calls Peak (Outbound)'] / df['Calls Peak']).mean() * 100
+                    st.markdown(f"""
+                        <div style='background-color: #e6f3ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
+                            <h4 style='color: #1f77b4; margin-top: 0;'>Call Type Distribution</h4>
+                            <p style='font-size: 16px;'>
+                            On average, during peak times:<br>
+                            • <strong>{inbound_ratio:.1f}%</strong> of calls are Inbound<br>
+                            • <strong>{outbound_ratio:.1f}%</strong> of calls are Outbound
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                
     except Exception as e:
         st.error(f"An error occurred while loading data: {e}")
         st.write("Please check that the data is in the correct format:")
