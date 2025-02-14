@@ -126,15 +126,31 @@ def main():
             # Show agent peak statistics
             st.write("### Agent Peak Statistics")
             agent_stats = df['Agents Peak'].describe()
-            col1, col2, col3, col4 = st.columns(4)
+            mean_agents = agent_stats['mean']
+            std_dev = agent_stats['std']
+            
+            # Calculate the range where approximately 68% of values fall
+            lower_range = mean_agents - std_dev
+            upper_range = mean_agents + std_dev
+            
+            col1, col2 = st.columns(2)
+            
             with col1:
-                st.metric("Average Agents", f"{agent_stats['mean']:.0f}")
+                st.metric("Average Daily Peak", f"{mean_agents:.0f} agents")
+                st.metric("Maximum Peak", f"{agent_stats['max']:.0f} agents")
+                st.metric("Minimum Peak", f"{agent_stats['min']:.0f} agents")
+            
             with col2:
-                st.metric("Maximum Agents", f"{agent_stats['max']:.0f}")
-            with col3:
-                st.metric("Minimum Agents", f"{agent_stats['min']:.0f}")
-            with col4:
-                st.metric("Standard Deviation", f"{agent_stats['std']:.1f}")
+                st.markdown("""
+                    <div style='background-color: #f0f2f6; padding: 15px; border-radius: 10px;'>
+                        <h4 style='color: #1f77b4; margin-top: 0;'>Typical Daily Range</h4>
+                        <p style='font-size: 16px;'>On most days (68%), agent peaks fall between:
+                        <br><strong>{:.0f}</strong> and <strong>{:.0f}</strong> agents</p>
+                        <p style='font-size: 14px; color: #666;'>
+                        This range is calculated using the standard deviation (±{:.1f}) 
+                        around the average, helping predict typical daily variations in peak staffing needs.</p>
+                    </div>
+                """.format(lower_range, upper_range, std_dev), unsafe_allow_html=True)
         
         with tab2:
             st.write("### Call Peak Analysis")
