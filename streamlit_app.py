@@ -4,6 +4,7 @@ import altair as alt
 import importlib.util
 import re
 import datetime
+from zoneinfo import ZoneInfo
 
 
 def check_openpyxl():
@@ -34,10 +35,28 @@ def main():
         # Calculate date range and last updated info
         min_date = df['Date'].min().strftime('%m/%d/%Y')
         max_date = df['Date'].max().strftime('%m/%d/%Y')
-        last_updated = datetime.datetime.now().strftime('%m/%d/%Y %I:%M %p')
-        st.markdown("## Data Information")
-        st.markdown(f"**Data Date Range:** {min_date} to {max_date}")
-        st.markdown(f"**Date Last Updated:** {last_updated}")
+        est_time = datetime.datetime.now(ZoneInfo("America/New_York")).strftime('%m/%d/%Y %I:%M %p EST')
+        
+        # Create a visually distinct data information section
+        st.markdown("---")
+        st.markdown("<h2 style='text-align: center; color: #1f77b4;'>Data Information</h2>", unsafe_allow_html=True)
+        
+        # Create two columns for better layout
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("<div style='background-color: #f0f2f6; padding: 20px; border-radius: 10px;'>"
+                       "<h3 style='color: #1f77b4;'>Data Date Range</h3>"
+                       f"<p style='font-size: 18px;'>{min_date} to {max_date}</p>"
+                       "</div>", unsafe_allow_html=True)
+            
+        with col2:
+            st.markdown("<div style='background-color: #f0f2f6; padding: 20px; border-radius: 10px;'>"
+                       "<h3 style='color: #1f77b4;'>Date Last Updated</h3>"
+                       f"<p style='font-size: 18px;'>{est_time}</p>"
+                       "</div>", unsafe_allow_html=True)
+        
+        st.markdown("---")
         
         # Ensure we have valid data
         if df.empty:
