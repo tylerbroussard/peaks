@@ -128,29 +128,36 @@ def main():
             agent_stats = df['Agents Peak'].describe()
             mean_agents = agent_stats['mean']
             std_dev = agent_stats['std']
+            median_agents = agent_stats['50%']
             
             # Calculate the range where approximately 68% of values fall
             lower_range = mean_agents - std_dev
             upper_range = mean_agents + std_dev
             
+            # Calculate how many days fall outside this range
+            days_outside_range = len(df[(df['Agents Peak'] < lower_range) | (df['Agents Peak'] > upper_range)])
+            total_days = len(df)
+            
             col1, col2 = st.columns(2)
             
             with col1:
-                st.metric("Average Daily Peak", f"{mean_agents:.0f} agents")
+                st.metric("Median Daily Peak", f"{median_agents:.0f} agents")
                 st.metric("Maximum Peak", f"{agent_stats['max']:.0f} agents")
                 st.metric("Minimum Peak", f"{agent_stats['min']:.0f} agents")
             
             with col2:
-                st.markdown("""
+                st.markdown(f"""
                     <div style='background-color: #f0f2f6; padding: 15px; border-radius: 10px;'>
-                        <h4 style='color: #1f77b4; margin-top: 0;'>Typical Daily Range</h4>
-                        <p style='font-size: 16px;'>On most days (68%), agent peaks fall between:
-                        <br><strong>{:.0f}</strong> and <strong>{:.0f}</strong> agents</p>
+                        <h4 style='color: #1f77b4; margin-top: 0;'>Peak Staffing Patterns</h4>
+                        <p style='font-size: 16px;'>
+                        • Typical range: <strong>{lower_range:.0f}</strong> to <strong>{upper_range:.0f}</strong> agents<br>
+                        • Average (mean): <strong>{mean_agents:.0f}</strong> agents<br>
+                        • {days_outside_range} out of {total_days} days fall outside this range</p>
                         <p style='font-size: 14px; color: #666;'>
-                        This range is calculated using the standard deviation (±{:.1f}) 
-                        around the average, helping predict typical daily variations in peak staffing needs.</p>
+                        Note: The wide range suggests significant variation in peak staffing needs. 
+                        Consider checking specific days of the week or times of year for patterns.</p>
                     </div>
-                """.format(lower_range, upper_range, std_dev), unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
         
         with tab2:
             st.write("### Call Peak Analysis")
