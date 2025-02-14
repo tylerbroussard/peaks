@@ -3,6 +3,7 @@ import pandas as pd
 import altair as alt
 import importlib.util
 import re
+import datetime
 
 
 def check_openpyxl():
@@ -30,10 +31,13 @@ def main():
         df = df[df['Date'].apply(is_date_format)].copy()
         df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
         
-        # Calculate and display date range
+        # Calculate date range and last updated info
         min_date = df['Date'].min().strftime('%m/%d/%Y')
         max_date = df['Date'].max().strftime('%m/%d/%Y')
-        st.write(f'**Data Date Range:** {min_date} to {max_date}')
+        last_updated = datetime.datetime.now().strftime('%m/%d/%Y %I:%M %p')
+        st.markdown("## Data Information")
+        st.markdown(f"**Data Date Range:** {min_date} to {max_date}")
+        st.markdown(f"**Date Last Updated:** {last_updated}")
         
         # Ensure we have valid data
         if df.empty:
